@@ -1,7 +1,7 @@
 # engine/stress_engine.py
 
-from config.settings import RISK_FREE_RATE
-from models.black_scholes import call_price
+from ..config.settings import RISK_FREE_RATE
+from ..models.black_scholes import call_price
 
 
 def stress_test_grid(portfolio, market_data, spot_shocks, vol_shocks):
@@ -15,19 +15,24 @@ def stress_test_grid(portfolio, market_data, spot_shocks, vol_shocks):
     base_spot = {}
     base_vol = {}
 
-    # collect unique tickers
+    # collect unique tickers (use underlying shares for CW)
     tickers = set()
 
     for pos in portfolio.cw_positions:
-        tickers.add(pos.ticker)
+        tickers.add(pos.underlying)
 
     for hedge in portfolio.hedge_positions:
-        tickers.add(hedge.underlying + ".VN")
+        tickers.add(hedge.underlying)
 
     # store baseline market
     for ticker in tickers:
-        base_spot[ticker] = market_data.get_spot(ticker)
-        base_vol[ticker] = market_data.get_vol(ticker)
+        try:
+            base_spot[ticker] = market_data.get_spot(ticker)
+            base_vol[ticker] = market_data.get_vol(ticker)
+        except ValueError:
+            # if no spot data, use default to avoid crash and continue
+            base_spot[ticker] = 0.0
+            base_vol[ticker] = 0.0
 
     # =========================
     # BASELINE VALUATION (IMPORTANT)
@@ -38,9 +43,10 @@ def stress_test_grid(portfolio, market_data, spot_shocks, vol_shocks):
 
     for pos in portfolio.cw_positions:
 
-        S = base_spot[pos.ticker]
-        sigma = market_data.get_vol(pos.ticker, pos.strike, T)
+        ticker = pos.underlying
+        S = base_spot.get(ticker, 0.0)
         T = pos.time_to_expiry()
+        sigma = market_data.get_vol(ticker, pos.strike, T)
 
         bs_price = call_price(S, pos.strike, T, RISK_FREE_RATE, sigma)
         cw_price = bs_price / pos.conversion_ratio
@@ -70,8 +76,9 @@ def stress_test_grid(portfolio, market_data, spot_shocks, vol_shocks):
 
             for pos in portfolio.cw_positions:
 
-                S0 = base_spot[pos.ticker]
-                vol0 = base_vol[pos.ticker]
+                ticker = pos.underlying
+                S0 = base_spot.get(ticker, 0.0)
+                vol0 = base_vol.get(ticker, 0.0)
 
                 shocked_S = S0 * (1 + s_shock)
                 shocked_vol = max(vol0 * (1 + v_shock), 0.0001)

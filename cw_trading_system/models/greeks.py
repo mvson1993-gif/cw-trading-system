@@ -1,7 +1,7 @@
 # models/greeks.py
 
 import math
-from models.black_scholes import compute_d1, compute_d2, norm_cdf
+from .black_scholes import compute_d1, compute_d2, norm_cdf
 
 
 # =========================

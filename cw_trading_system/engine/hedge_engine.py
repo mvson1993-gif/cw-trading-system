@@ -1,6 +1,6 @@
 # engine/hedge_engine.py
 
-from config.settings import HEDGE_POLICY
+from ..config.settings import HEDGE_POLICY
 
 
 def generate_hedge_actions(risk_output):

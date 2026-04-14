@@ -1,10 +1,15 @@
 # engine/risk_engine.py
 
 from collections import defaultdict
-from config.settings import RISK_FREE_RATE, RISK_LIMITS
-from models.greeks import compute_greeks
+import logging
+from ..config.settings import RISK_FREE_RATE, RISK_LIMITS
+from ..models.greeks import compute_greeks
+from ..utils.performance import timed
+
+logger = logging.getLogger(__name__)
 
 
+@timed("calculate_portfolio_risk")
 def calculate_portfolio_risk(portfolio, market_data):
 
     risk_by_underlying = defaultdict(lambda: {
@@ -16,8 +21,13 @@ def calculate_portfolio_risk(portfolio, market_data):
 
     for pos in portfolio.cw_positions:
 
-        S = market_data.get_spot(pos.ticker)
-        sigma = market_data.get_vol(pos.ticker, pos.strike, T)
+        try:
+            S = market_data.get_spot(pos.underlying)
+        except ValueError as e:
+            logger.warning(f"Skipping CW position {pos.ticker} without spot data: {e}")
+            continue
+
+        sigma = pos.sigma
         T = pos.time_to_expiry()
 
         greeks = compute_greeks(S, pos.strike, T, RISK_FREE_RATE, sigma)

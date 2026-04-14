@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: OCBS Mock Sandbox Contract
+  version: 0.1.0
+  description: |
+    Sample sandbox contract for local development of the CW Trading System.
+    Replace paths, field names, and auth details once the real OCBS API specification is available.
+servers:
+  - url: https://sandbox.ocbs.local
+    description: Local/mock sandbox endpoint
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthRequest:
+      type: object
+      required: [api_key, api_secret]
+      properties:
+        api_key:
+          type: string
+        api_secret:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 3600
+        environment:
+          type: string
+          example: sandbox
+    OrderRequest:
+      type: object
+      required: [symbol, side, quantity, order_type]
+      properties:
+        symbol:
+          type: string
+          example: HPG24001
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: integer
+          example: 100000
+        order_type:
+          type: string
+          enum: [market, limit]
+        price:
+          type: number
+          format: float
+          example: 1.25
+        time_in_force:
+          type: string
+          example: day
+    OrderResponse:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: SANDBOX-000001
+        status:
+          type: string
+          example: accepted
+        execution_price:
+          type: number
+          format: float
+        filled_quantity:
+          type: integer
+          example: 0
+        environment:
+          type: string
+          example: sandbox
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate and receive a bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /orders:
+    post:
+      summary: Submit an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order accepted by sandbox
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/{orderId}:
+    get:
+      summary: Get order status
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current status for one order
+    delete:
+      summary: Cancel an order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order cancelled
+  /positions:
+    get:
+      summary: Get current positions
+      responses:
+        '200':
+          description: Position snapshot
+  /trades:
+    get:
+      summary: Get recent trades
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Trade list
+  /balance:
+    get:
+      summary: Get account balance and buying power
+      responses:
+        '200':
+          description: Balance snapshot

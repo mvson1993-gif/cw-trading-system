@@ -1,35 +1,35 @@
 # data/monitor_store.py
 
-import json
 from datetime import datetime
+from .repositories import MonitorRepository
 
-FILE_PATH = "data/monitor_log.json"
+# Initialize repository instance
+_monitor_repo = MonitorRepository(file_path="data/monitor_log.json")
 
 
 def load_logs():
-    try:
-        with open(FILE_PATH, "r") as f:
-            return json.load(f)
-    except:
-        return []
+    """Load all monitoring snapshots from repository.
+    
+    Returns:
+        List of snapshot records
+    """
+    return _monitor_repo.load_all_snapshots()
 
 
 def save_logs(logs):
-    with open(FILE_PATH, "w") as f:
-        json.dump(logs, f, indent=4)
+    """Save logs list to repository (replaces entire store).
+    
+    Args:
+        logs: List of log dictionaries
+    """
+    _monitor_repo._write_data(logs)
 
 
 def record_snapshot(risk, pnl):
-
-    logs = load_logs()
-
-    logs.append({
-        "time": datetime.now().isoformat(),
-        "delta": risk["total"]["delta"],
-        "gamma": risk["total"]["gamma"],
-        "vega": risk["total"]["vega"],
-        "theta": risk["total"]["theta"],
-        "pnl": pnl["total_pnl"]
-    })
-
-    save_logs(logs)
+    """Record a risk and P&L snapshot.
+    
+    Args:
+        risk: Risk metrics dict with structure {"total": {"delta": ..., "gamma": ..., ...}}
+        pnl: P&L dict with structure {"total_pnl": ...}
+    """
+    _monitor_repo.record_snapshot(risk, pnl)

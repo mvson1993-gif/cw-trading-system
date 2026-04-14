@@ -1,9 +1,14 @@
 # engine/pnl_engine.py
 
-from config.settings import RISK_FREE_RATE
-from models.black_scholes import call_price
+import logging
+from ..config.settings import RISK_FREE_RATE
+from ..models.black_scholes import call_price
+from ..utils.performance import timed
+
+logger = logging.getLogger(__name__)
 
 
+@timed("calculate_pnl")
 def calculate_pnl(portfolio, market_data):
 
     cw_pnl = 0.0
@@ -16,8 +21,13 @@ def calculate_pnl(portfolio, market_data):
 
     for pos in portfolio.cw_positions:
 
-        S = market_data.get_spot(pos.ticker)
-        sigma = market_data.get_vol(pos.ticker, pos.strike, T)
+        try:
+            S = market_data.get_spot(pos.underlying)
+        except ValueError as e:
+            logger.warning(f"Skipping CW position {pos.ticker} without spot data: {e}")
+            continue
+
+        sigma = pos.sigma
         T = pos.time_to_expiry()
 
         bs_price = call_price(S, pos.strike, T, RISK_FREE_RATE, sigma)

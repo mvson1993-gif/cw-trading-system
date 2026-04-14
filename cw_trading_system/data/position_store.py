@@ -1,10 +1,11 @@
 # data/position_store.py
 
-import json
 from datetime import date
-from data.positions import CWPosition, HedgePosition
+from .positions import CWPosition, HedgePosition
+from .repositories import PositionRepository
 
-FILE_PATH = "data/positions.json"
+# Initialize repository instance
+_position_repo = PositionRepository(file_path="data/positions.json")
 
 
 # =========================
@@ -12,22 +13,12 @@ FILE_PATH = "data/positions.json"
 # =========================
 
 def load_portfolio():
-
-    try:
-        with open(FILE_PATH, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        return [], []
-
-    cw_positions = [
-        CWPosition(**p) for p in data.get("cw_positions", [])
-    ]
-
-    hedge_positions = [
-        HedgePosition(**h) for h in data.get("hedge_positions", [])
-    ]
-
-    return cw_positions, hedge_positions
+    """Load portfolio from repository.
+    
+    Returns:
+        Tuple of (cw_positions, hedge_positions)
+    """
+    return _position_repo.load_portfolio()
 
 
 # =========================
@@ -35,14 +26,13 @@ def load_portfolio():
 # =========================
 
 def save_portfolio(cw_positions, hedge_positions):
-
-    data = {
-        "cw_positions": [vars(p) for p in cw_positions],
-        "hedge_positions": [vars(h) for h in hedge_positions]
-    }
-
-    with open(FILE_PATH, "w") as f:
-        json.dump(data, f, indent=4)
+    """Save portfolio to repository.
+    
+    Args:
+        cw_positions: List of CW positions
+        hedge_positions: List of hedge positions
+    """
+    _position_repo.save_portfolio(cw_positions, hedge_positions)
 
 
 # =========================
@@ -50,9 +40,14 @@ def save_portfolio(cw_positions, hedge_positions):
 # =========================
 
 def add_cw(new_pos, cw_positions, hedge_positions):
-
-    cw_positions.append(new_pos)
-    save_portfolio(cw_positions, hedge_positions)
+    """Add a new CW position.
+    
+    Args:
+        new_pos: CW position to add
+        cw_positions: Current CW positions list
+        hedge_positions: Current hedge positions list
+    """
+    _position_repo.add_cw_position(new_pos, cw_positions, hedge_positions)
 
 
 # =========================
@@ -60,10 +55,14 @@ def add_cw(new_pos, cw_positions, hedge_positions):
 # =========================
 
 def remove_cw(index, cw_positions, hedge_positions):
-
-    if 0 <= index < len(cw_positions):
-        cw_positions.pop(index)
-        save_portfolio(cw_positions, hedge_positions)
+    """Remove CW position by index.
+    
+    Args:
+        index: Index of position to remove
+        cw_positions: Current CW positions list
+        hedge_positions: Current hedge positions list
+    """
+    _position_repo.remove_cw_position(index, cw_positions, hedge_positions)
 
 
 # =========================
@@ -71,14 +70,13 @@ def remove_cw(index, cw_positions, hedge_positions):
 # =========================
 
 def remove_expired(cw_positions, hedge_positions):
-
-    today = date.today()
-
-    cw_positions = [
-        p for p in cw_positions
-        if date.fromisoformat(p.expiry) > today
-    ]
-
-    save_portfolio(cw_positions, hedge_positions)
-
-    return cw_positions
+    """Remove expired CW positions.
+    
+    Args:
+        cw_positions: Current CW positions list
+        hedge_positions: Current hedge positions list
+        
+    Returns:
+        Updated list of non-expired CW positions
+    """
+    return _position_repo.remove_expired_positions(cw_positions, hedge_positions)

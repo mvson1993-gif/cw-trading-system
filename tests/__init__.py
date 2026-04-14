@@ -1,0 +1,1 @@
+# Tests for cw_trading_system

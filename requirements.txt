@@ -1,0 +1,34 @@
+numpy
+scipy
+streamlit
+pandas
+pytest
+
+# Phase 1: Database & Environment Configuration
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+psycopg2-binary>=2.9.0
+
+# Phase 2: Market Data & Background Scheduling
+yfinance>=0.2.0
+apscheduler>=3.10.0
+
+# Logging & Monitoring
+python-json-logger>=2.0.0
+
+# Phase 3: Monitoring & Alerting
+yagmail>=0.15.0
+twilio>=8.0.0
+
+# Phase 4: Trade Execution & Reconciliation
+requests>=2.31.0
+
+# Phase 5: VN Market Data APIs & Real-time Streaming
+websocket-client>=1.6.0
+
+# Phase 6: Advanced Analytics (Plotly already included)
+# plotly already included above
+
+# Security & Encryption
+cryptography>=41.0.0

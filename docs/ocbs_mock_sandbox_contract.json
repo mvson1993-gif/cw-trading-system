@@ -1,0 +1,49 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OCBS Mock Sandbox Contract",
+    "version": "0.1.0",
+    "description": "Sample mock OCBS sandbox contract for local development before the real broker API is available."
+  },
+  "servers": [
+    {
+      "url": "https://sandbox.ocbs.local",
+      "description": "Local mock sandbox"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Authenticate and receive a sandbox bearer token"
+      }
+    },
+    "/orders": {
+      "post": {
+        "summary": "Submit a buy/sell order into the mock sandbox"
+      }
+    },
+    "/orders/{orderId}": {
+      "get": {
+        "summary": "Fetch the status of a sandbox order"
+      },
+      "delete": {
+        "summary": "Cancel a sandbox order"
+      }
+    },
+    "/positions": {
+      "get": {
+        "summary": "Retrieve current sandbox positions"
+      }
+    },
+    "/trades": {
+      "get": {
+        "summary": "Retrieve sandbox trade history"
+      }
+    },
+    "/balance": {
+      "get": {
+        "summary": "Retrieve sandbox buying power and cash"
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build: .
+    container_name: cw-trading-system
+    ports:
+      - "8501:8501"
+    environment:
+      - ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://trading:trading_password@db:5432/cw_trading
+      - OCBS_ENABLED=false
+      - RECONCILIATION_ENABLED=false
+      - EMAIL_ENABLED=false
+      - SMS_ENABLED=false
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - cw-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: cw-trading-db
+    environment:
+      - POSTGRES_USER=trading
+      - POSTGRES_PASSWORD=trading_password
+      - POSTGRES_DB=cw_trading
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cw-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading -d cw_trading"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cw-trading-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - cw-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  cw-network:
+    driver: bridge
